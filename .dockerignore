@@ -1,0 +1,10 @@
+.venv
+.git
+frontend
+datasets
+jupyter notebooks
+models
+**/__pycache__
+.env
+token.txt
+*.zip
