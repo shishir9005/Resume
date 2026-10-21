@@ -1,0 +1,15 @@
+.env
+token.txt
+.DS_Store
+__pycache__/
+*.pyc
+venv/
+.venv/
+/models/
+.streamlit/secrets.toml
+*.zip
+*.log
+backend/logs/
+get_token.py
+datasets/
+jupyter notebooks/*.csv
