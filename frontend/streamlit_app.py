@@ -14,6 +14,35 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+import threading
+import time
+
+import requests
+
+
+@st.cache_resource(show_spinner="Starting the analysis engine (the first load takes about a minute)...")
+def start_backend():
+    import uvicorn
+    from backend.main import app
+
+    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=8000, log_level="warning"))
+    threading.Thread(target=server.run, daemon=True).start()
+    for _ in range(180):
+        try:
+            if requests.get("http://127.0.0.1:8000/api/v1/health", timeout=2).ok:
+                return True
+        except requests.RequestException:
+            pass
+        time.sleep(1)
+    raise RuntimeError("Backend did not start in time")
+
+
+try:
+    start_backend()
+except Exception:
+    st.error("The analysis engine didn't start. Please refresh the page in a minute.")
+    st.stop()
+
 # Auth state. Populated by Supabase sign-in / sign-up / OAuth.
 # All four are None when signed out, all four are set when signed in.
 for key, default in [
