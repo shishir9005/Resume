@@ -1,5 +1,5 @@
 import spacy
-from sentence_transformers import SentenceTransformer
+from backend.services.embedder import Embedder as SentenceTransformer
 from typing import Dict, List, Optional
 from backend.models.schemas import IssueDetail
 from backend.services.groq_parser import parse_resume, parse_job_description

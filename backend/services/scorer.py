@@ -1,7 +1,7 @@
 import re
 import spacy
 import numpy as np
-from sentence_transformers import SentenceTransformer
+from backend.services.embedder import Embedder as SentenceTransformer
 from typing import Dict, List, Optional, Tuple
 
 from backend.utils.util import log_warning

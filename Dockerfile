@@ -1,5 +1,8 @@
 FROM python:3.11-slim
 
+ENV FASTEMBED_CACHE_PATH=/app/.cache/fastembed \
+    PYTHONUNBUFFERED=1
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagic1 libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 \
     libffi-dev fonts-dejavu-core \
@@ -7,13 +10,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
-
 COPY backend/requirements.txt backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
-RUN python -m spacy download en_core_web_md && python -m spacy download en_core_web_sm
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+RUN python -m spacy download en_core_web_sm
+RUN python -c "from fastembed import TextEmbedding; TextEmbedding('sentence-transformers/all-MiniLM-L6-v2')"
 
 COPY backend ./backend
 
