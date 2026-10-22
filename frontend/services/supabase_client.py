@@ -140,6 +140,10 @@ def sign_out() -> None:
 def _humanize(exc: Exception) -> str:
     msg = str(exc)
     # supabase errors arrive as "<status>: {json blob}" — surface the human bit
+    if 'rate limit' in msg.lower():
+        return 'Too many sign-up emails were sent recently. Please try again in an hour.'
+    if 'provide either an email' in msg.lower():
+        return 'Please enter your email and password.'
     if 'invalid_grant' in msg.lower() or 'invalid login' in msg.lower():
         return 'Wrong email or password'
     if 'user already registered' in msg.lower() or 'already been registered' in msg.lower():
