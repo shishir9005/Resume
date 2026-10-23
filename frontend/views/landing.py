@@ -68,7 +68,7 @@ def render():
     with col3:
         st.markdown("""
         ### 🔒 Your Data
-        Your resume is processed on our server, and AI suggestions are generated through the Groq API. Analysis results are saved to your account history, and you can delete them anytime from the History page.
+        Your resume is processed on our server, and its text is sent to the Groq API to extract structured details such as skills and experience. Analysis results are saved to your account history, and you can delete them anytime from the History page.
         """)
 
     st.markdown("---")
