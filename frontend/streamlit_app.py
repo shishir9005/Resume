@@ -170,19 +170,6 @@ with st.sidebar:
                     st.session_state.user_email    = result["email"]
                 st.rerun()
 
-        st.markdown("<div style='text-align:center; margin: 8px 0; color:#94a3b8;'>or</div>",
-                    unsafe_allow_html=True)
-
-        oauth = supabase_client.google_oauth_url()
-        if "error" in oauth:
-            st.caption(f"Google sign-in unavailable: {oauth['error']}")
-        else:
-            st.link_button(
-                "Continue with Google",
-                url=oauth["url"],
-                use_container_width=True,
-            )
-
 # Main content area - render based on current view
 if st.session_state.current_view == 'landing':
     # Import and render landing page
