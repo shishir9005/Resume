@@ -5,6 +5,22 @@ Upload a resume, optionally paste a job description, and get a 0–100 ATS score
 **Live demo:** https://shishir-ats-scorer.streamlit.app
 (Free hosting. If the app has been idle, the first load takes about a minute while it wakes up.)
 
+<details>
+<summary><b>中文简介</b></summary>
+
+上传简历（可选粘贴岗位描述），即可获得 0–100 的 ATS 评分、分项得分、按严重程度排序的修改建议，以及可下载的 PDF 报告。
+
+- **五项评分：** 格式、关键词与技能、内容质量、技能验证、ATS 兼容性
+- **技能验证：** 用语义相似度检查简历中列出的技能是否有项目或经历支撑
+- **岗位描述匹配：** 匹配度、语义相似度、已匹配和缺失的关键词、技能差距
+- **账号与历史：** 邮箱登录，分析结果保存在个人账户中，可随时删除
+- **技术栈：** Streamlit、FastAPI、spaCy、MiniLM 句向量（ONNX）、Groq API、Supabase、WeasyPrint
+
+在线演示使用免费服务器：空闲后首次打开约需一分钟唤醒，在中国大陆网络下可能更慢。
+
+</details>
+
+
 ## What it does
 
 - **Five-part score.** Formatting, keywords and skills, content quality, skill validation, and ATS compatibility, each on its own scale.
