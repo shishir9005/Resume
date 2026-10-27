@@ -5,7 +5,12 @@ from backend.models.schemas import IssueDetail
 from backend.services.groq_parser import parse_resume, parse_job_description
 from backend.services.jd_matcher import compare_resume_with_jd
 from backend.services.feedback import analyze_issues, generate_issues_summary
-from backend.services.scorer import calculate_overall_score, validate_skills_with_projects
+from backend.services.scorer import (
+    calculate_overall_score,
+    generate_critical_issues,
+    generate_improvements,
+    validate_skills_with_projects,
+)
 
 
 def analyze_full_resume(
@@ -139,6 +144,8 @@ def analyze_full_resume(
             if jd_comparison_result else []
         ),
         "strengths": _generate_strengths(parsed_resume, skills, projects, action_verbs, skill_validation, scores),
+        "critical_issues": [i.strip() for i in generate_critical_issues(scores, grammar_results, location_results)],
+        "suggestions":       [s.strip() for s in generate_improvements(scores, skill_validation)],
         "interpretation":    scores.get('overall_interpretation', ''),
         "skill_validation_details": skill_validation_details,
         "experience_months": experience_months,

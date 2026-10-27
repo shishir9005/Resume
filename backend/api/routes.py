@@ -2,6 +2,7 @@ import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi.concurrency import run_in_threadpool
 
 from backend.api.auth import get_current_user
 from backend.models.schemas import (
@@ -64,8 +65,10 @@ async def analyze_resume(
     #Full Analysis Pipeline 
     try:
         from backend.services.resume_analyzer import analyze_full_resume
-        
-        result = analyze_full_resume(
+
+        #the pipeline makes blocking Groq calls; run it in a worker thread so the server stays responsive
+        result = await run_in_threadpool(
+            analyze_full_resume,
             resume_text=resume_text,
             nlp=nlp,
             embedder=embedder,
@@ -117,6 +120,9 @@ async def analyze_resume(
         skills=list(result.get('skills', [])[:20]),
         jd_comparison=jd_comparison_result,
         interpretation=result.get('interpretation', ''),
+        strengths=result.get('strengths', []),
+        critical_issues=result.get('critical_issues', []),
+        suggestions=result.get('suggestions', []),
         resume_sections=result.get('resume_sections'),
     )
 
