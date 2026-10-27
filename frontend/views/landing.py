@@ -81,7 +81,7 @@ def render():
     with col1:
         st.markdown("""
         #### 1️⃣ Upload Your Resume
-        Support for PDF, DOC, and DOCX formats
+        Support for PDF and DOCX formats
         """)
 
     with col2:

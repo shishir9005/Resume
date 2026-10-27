@@ -115,7 +115,7 @@ SUPABASE_JWT_SECRET=...
 GROQ_API_KEY=...
 ```
 
-In Supabase, create one table named `analyses` with the columns `user_id`, `filename`, `ats_score`, `created_at`, and `analysis_result` (JSON).
+In Supabase, create one table named `analyses` with the columns `id` (primary key), `user_id`, `filename`, `ats_score`, `keyword_match`, `missing_keywords` (JSON), `created_at`, and `analysis_result` (JSON).
 
 Then run:
 
@@ -150,7 +150,7 @@ jupyter notebooks/   BERT fine-tuning experiment (dataset not included)
 ## Notes and limits
 
 - Resumes are processed on the server, and their text is sent to the Groq API. Results are stored in your account's history and can be deleted from the History page.
-- Accepted files: PDF, DOC, DOCX, up to 5 MB.
+- Accepted files: PDF and DOCX, up to 5 MB. Old `.doc` files need converting first.
 - Sign-up doesn't verify email addresses. This is a demo.
 - The free server is small, so a few people at once is fine and many at once may not be.
 
