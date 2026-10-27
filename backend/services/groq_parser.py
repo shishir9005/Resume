@@ -244,6 +244,10 @@ def _validate_resume_result(result: dict) -> dict:
         exp.setdefault("end_date", "")
         exp.setdefault("duration_months", 0)
         exp.setdefault("description", "")
+        #the model sometimes returns null for text fields; keep them as strings
+        for field in ("job_title", "company", "start_date", "end_date", "description"):
+            if not isinstance(exp.get(field), str):
+                exp[field] = "" if exp.get(field) is None else str(exp[field])
         #Ensure duration_months is an int
         try:
             exp["duration_months"] = int(exp["duration_months"])

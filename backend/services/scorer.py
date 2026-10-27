@@ -101,7 +101,8 @@ def _calculate_semantic_similarity(skill: str, text: str, embedder: SentenceTran
 def _skill_matches(skill: str, text: str, embedder: SentenceTransformer, threshold: float) -> Tuple[bool, float]:
 
     #fast, o(n) directly check if skill is a substring of the text (case-insensitive)
-    if skill.lower() in text.lower():
+    #whole-word match, so "C", "R" or "Java" don't match inside "Docker" or "JavaScript"
+    if re.search(rf'(?<![A-Za-z0-9+#]){re.escape(skill.strip())}(?![A-Za-z0-9+#])', text, re.IGNORECASE):
         return True, 1.0
     
     #slow, semantic similarity check using sentence embeddings
@@ -297,7 +298,7 @@ def _calc_ats_compatibility_score(
     edu_entries  = [e for e in parsed_resume.get('education', [])  if isinstance(e, dict)]
     skills_count = len(parsed_resume.get('skills', []))
 
-    exp_desc_len = sum(len(e.get('description', '')) for e in exp_entries)
+    exp_desc_len = sum(len(e.get('description') or '') for e in exp_entries)
     edu_desc_len = sum(len((e.get('degree') or '') + (e.get('institution') or '')) for e in edu_entries)  # Handle None to prevent string concatenation errors
 
     #deduction03
