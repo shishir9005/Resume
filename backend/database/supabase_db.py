@@ -112,7 +112,8 @@ async def delete_analysis(analysis_id: str, user_id: str) -> bool:
                 }
             )
             response.raise_for_status()
-            return True
+            #with return=representation, PostgREST returns the deleted rows; empty means nothing matched
+            return bool(response.json())
     except Exception as exc:
         logger.error(f"Failed to delete analysis {analysis_id}: {exc}")
         return False
