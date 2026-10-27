@@ -13,3 +13,4 @@ backend/logs/
 get_token.py
 datasets/
 jupyter notebooks/*.csv
+.fastembed-cache/

@@ -1,5 +1,7 @@
 # ATS Resume Scorer
 
+[![CI](https://github.com/shishir9005/Resume/actions/workflows/ci.yml/badge.svg)](https://github.com/shishir9005/Resume/actions/workflows/ci.yml)
+
 Upload a resume, optionally paste a job description, and get a 0–100 ATS score with a breakdown, prioritized fixes, and a downloadable PDF report.
 
 **Live demo:** https://shishir-ats-scorer.streamlit.app
@@ -24,6 +26,7 @@ Upload a resume, optionally paste a job description, and get a 0–100 ATS score
 
 ## What it does
 
+- **Example resumes.** Three one-page internship resumes (backend, AI/LLM, data analyst) on the Resources page, each scoring 88–91 here and downloadable as a Word template, plus weak vs. strong bullet examples.
 - **Five-part score.** Formatting, keywords and skills, content quality, skill validation, and ATS compatibility, each on its own scale.
 - **Skill validation.** Checks whether each skill listed on the resume is backed by a project or experience bullet, using semantic similarity.
 - **Job description match.** Match percentage, semantic similarity, matched and missing keywords, and a skills gap list.
@@ -56,7 +59,7 @@ question ──► agent loop (Groq, tool calling, max 6 rounds)
 answer + steps taken + guides used
 ```
 
-**Retrieval (RAG).** The knowledge base is 13 short Markdown guides in `backend/knowledge/`: ATS formatting, bullet points, action verbs, skills, projects, tailoring to a job description, internships in China, skills by role, and how this app's score works. Each guide is split at its `##` headings (66 chunks). Every chunk is embedded once at startup with the same MiniLM model the scorer already uses, and a query is a single matrix-vector product. At this size a NumPy matrix is faster and simpler than a vector database. Code: `backend/services/rag.py`.
+**Retrieval (RAG).** The knowledge base is 13 short Markdown guides plus 3 example resumes in `backend/knowledge/`. The guides cover ATS formatting, bullet points, action verbs, skills, projects, tailoring to a job description, internships in China, skills by role, and how this app's score works. Each file is split at its `##` headings (81 chunks). Every chunk is embedded once at startup with the same MiniLM model the scorer already uses, and a query is a single matrix-vector product. At this size a NumPy matrix is faster and simpler than a vector database. Code: `backend/services/rag.py`.
 
 **Agent.** A hand-written tool-calling loop on Groq's OpenAI-compatible API, about 100 lines, with no agent framework. Each round, the model either answers or asks for tools. The backend runs them and feeds the results back. After 6 rounds it must answer. Code: `backend/services/agent.py` (loop) and `backend/services/coach_tools.py` (tools).
 
@@ -67,13 +70,22 @@ answer + steps taken + guides used
 - Each LLM call has a 30-second timeout.
 - Only tool names are logged, never resume text.
 
-**Evaluation.** `backend/evals/retrieval_eval.py` asks 24 test questions with known answers and reports hit@1, hit@3, and MRR. Current results: **hit@1 92%, hit@3 96%, MRR 0.94**. It exits non-zero if hit@3 drops below 80%, so it can run in CI.
+**Evaluation.** `backend/evals/retrieval_eval.py` asks 27 test questions with known answers and reports hit@1, hit@3, and MRR. Current results: **hit@1 89%, hit@3 96%, MRR 0.92**. It exits non-zero if hit@3 drops below 80%, and CI runs it on every push.
 
 ```bash
 python -m backend.evals.retrieval_eval
 ```
 
 To add knowledge, drop a Markdown file with `##` sections into `backend/knowledge/`, add a test question for it to the eval, and restart the backend.
+
+## Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+34 tests cover the scoring rules, keyword matching, the coach's tools and grounding check, chunking and search, the agent loop (with a fake LLM, so no API calls), the coach API's input validation, and the Word templates. They run offline in a few seconds. GitHub Actions runs them and the retrieval eval on every push.
 
 ## Tech stack
 

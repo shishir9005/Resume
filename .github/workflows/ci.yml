@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FASTEMBED_CACHE_PATH: ${{ github.workspace }}/.fastembed-cache
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            requirements-dev.txt
+
+      - name: Install system libraries
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libmagic1
+
+      - name: Install Python dependencies
+        run: pip install -r backend/requirements.txt -r requirements-dev.txt
+
+      - name: Unit tests
+        run: pytest -q
+
+      # the embedding model (~90 MB) is cached between runs
+      - uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.fastembed-cache
+          key: fastembed-all-MiniLM-L6-v2
+
+      - name: Retrieval quality gate (fails if hit@3 < 80%)
+        run: python -m backend.evals.retrieval_eval
