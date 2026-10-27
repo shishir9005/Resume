@@ -40,6 +40,9 @@ TEST_SET = [
     ("Is it okay to repeat keywords many times?",                       "common-mistakes"),
     ("Why is my content quality score low?",                            "ats-score-explained"),
     ("Why did I get a penalty for missing job description keywords?",   "ats-score-explained"),
+    ("Show me an example resume for a backend engineering internship",  "example-resume-backend"),
+    ("What does a good AI or LLM project section look like on a resume?", "example-resume-ai"),
+    ("Sample data analyst intern resume with SQL and Tableau",          "example-resume-data"),
 ]
 
 
