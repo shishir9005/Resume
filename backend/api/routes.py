@@ -42,24 +42,28 @@ async def analyze_resume(
     embedder = request.app.state.embedder
 
 
+    from backend.services.resume_parser import (
+        FileParsingError,
+        FileValidationError,
+        parse_resume_file,
+    )
+
     try:
         file_bytes = await resume.read()
         filename   = resume.filename or 'resume'
 
-        from backend.services.resume_parser import (
-            FileParsingError,
-            FileValidationError,
-            parse_resume_file,
-        )
-
         resume_text, _metadata = parse_resume_file(file_bytes, filename)
         logger.info(f"Parsed '{filename}': {len(resume_text)} chars extracted")
 
-    except Exception as exc:
-        logger.error(f'File parsing failed: {exc}')
+    except (FileParsingError, FileValidationError) as exc:
+        # these messages are written for users (e.g. "convert .doc to .docx")
+        logger.warning(f'File parsing failed: {exc}')
+        raise HTTPException(status_code=422, detail=str(exc))
+    except Exception:
+        logger.exception('File parsing failed')
         raise HTTPException(
             status_code=422,
-            detail=f'Could not read or parse the resume: {exc}',
+            detail='Could not read the resume. Please upload a valid PDF or DOCX file.',
         )
 
     #Full Analysis Pipeline 
@@ -74,9 +78,9 @@ async def analyze_resume(
             embedder=embedder,
             job_description=job_description
         )
-    except Exception as exc:
-        logger.error(f'Full analysis pipeline failed: {exc}')
-        raise HTTPException(status_code=500, detail=f'Analysis pipeline failed: {exc}')
+    except Exception:
+        logger.exception('Full analysis pipeline failed')
+        raise HTTPException(status_code=500, detail='The analysis failed. Please try again in a moment.')
 
     from backend.models.schemas import ComponentScores
 
@@ -129,7 +133,7 @@ async def analyze_resume(
 
     try:
         from backend.database.supabase_db import save_analysis
-        await save_analysis(user_id, filename, result)
+        await save_analysis(user_id, filename, {**result, 'keyword_match': response.keyword_match})
     except Exception as exc:
         logger.warning(f'History save failed (non-blocking): {exc}')
 
@@ -177,9 +181,9 @@ async def get_history(user_id: str = Depends(get_current_user)):
     from backend.database.supabase_db import get_user_history
     try:
         return await get_user_history(user_id)
-    except Exception as exc:
-        logger.error(f'History fetch failed: {exc}')
-        raise HTTPException(status_code=500, detail=f'Could not load history: {exc}')
+    except Exception:
+        logger.exception('History fetch failed')
+        raise HTTPException(status_code=500, detail='Could not load your history. Please try again.')
 
 
 @router.delete('/history/{analysis_id}')
@@ -196,9 +200,9 @@ async def delete_history_entry(
         return {'status': 'deleted', 'id': analysis_id}
     except HTTPException:
         raise
-    except Exception as exc:
-        logger.error(f'History delete failed: {exc}')
-        raise HTTPException(status_code=500, detail=f'Could not delete: {exc}')
+    except Exception:
+        logger.exception('History delete failed')
+        raise HTTPException(status_code=500, detail='Could not delete this analysis. Please try again.')
     
 
 @router.post('/generate-pdf')
@@ -221,9 +225,9 @@ async def generate_pdf(
                 "Content-Disposition": "attachment; filename=ats_report.pdf"
             }
         )
-    except Exception as e:
-        logger.error(f'Failed to generate PDF: {e}')
-        raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {e}")
+    except Exception:
+        logger.exception('Failed to generate PDF')
+        raise HTTPException(status_code=500, detail="Could not generate the PDF report. Please try again.")
     
 
 @router.get('/history/{analysis_id}/pdf')
@@ -253,6 +257,6 @@ async def generate_history_pdf(
                 "Content-Disposition": f"attachment; filename=ats_report_{analysis_id}.pdf"
             }
         )
-    except Exception as e:
-        logger.error(f'Failed to generate PDF for history: {e}')
-        raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {e}")
+    except Exception:
+        logger.exception('Failed to generate PDF for history')
+        raise HTTPException(status_code=500, detail="Could not generate the PDF report. Please try again.")

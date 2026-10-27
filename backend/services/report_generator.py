@@ -4,7 +4,8 @@ from jinja2 import Environment, FileSystemLoader
 from typing import Dict
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), '..', 'templates')
-env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+#autoescape: resume text and client-supplied fields must never become HTML
+env = Environment(loader=FileSystemLoader(TEMPLATE_DIR), autoescape=True)
 
 def format_date(value, fmt='%B %d, %Y at %I:%M %p'):
     """Convert ISO timestamp string → human-readable date string."""

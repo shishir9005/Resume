@@ -155,6 +155,8 @@ Important instructions:
 - preferred_skills: skills stated as preferred, nice-to-have, or bonus.
 - keywords: extract ALL important terms an ATS system would match against,
   including skills, technologies, certifications, and domain terms.
+- Do NOT include the job title, the company name, or generic words such as
+  "intern", "engineer", "engineering", "team", "role", or "experience" in any list.
 - Return ONLY valid JSON. No markdown code fences, no explanation.
 
 Job Description Text:

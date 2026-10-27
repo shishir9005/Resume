@@ -108,6 +108,18 @@ def _skill_matches(skill: str, text: str, embedder: SentenceTransformer, thresho
     sim = _calculate_semantic_similarity(skill, text, embedder)
     return sim >= threshold, sim
 
+#spoken languages can't be "shown" in a project, so skill validation skips them
+SPOKEN_LANGUAGES = {
+    'english', 'chinese', 'mandarin', 'cantonese', 'hindi', 'urdu', 'bengali', 'bangla', 'arabic',
+    'spanish', 'french', 'german', 'japanese', 'korean', 'russian', 'portuguese', 'italian',
+    'vietnamese', 'thai', 'indonesian', 'malay', 'turkish', 'persian', 'tamil', 'telugu', 'nepali',
+}
+
+def is_spoken_language(skill: str) -> bool:
+    #"Chinese (native)", "English - fluent", "HSK 4", "IELTS 7.5", "CET-6"
+    base = re.split(r'[(\-–:,]', skill.lower())[0].strip()
+    return base in SPOKEN_LANGUAGES or bool(re.match(r'(hsk|ielts|toefl|cet)[\s-]*\d', skill.lower()))
+
 #Skill validation
 def validate_skills_with_projects(
     skills: List[str],
@@ -116,7 +128,8 @@ def validate_skills_with_projects(
     embedder: SentenceTransformer,
     threshold: float = 0.6,
 ) -> Dict:
-    
+
+    skills = [s for s in skills if not is_spoken_language(s)]
     if not skills:
         return {
             'validated_skills':      [],
@@ -248,8 +261,14 @@ def _calc_content_score(
     achievement_count = sum(len(re.findall(p, text, re.IGNORECASE)) for p in ACHIEVEMENT_PATTERNS)
     score += _tier_score(achievement_count, [(10,5.0),(7,4.0),(5,3.0),(3,2.0),(1,1.0)])
 
-    grammar_penalty = grammar_results.get('penalty_applied', 0.0)
-    score += max(0.0, 10.0 - grammar_penalty / 2.0)
+    #grammar is worth 10 points only when it was actually checked; otherwise the
+    #15 points from verbs and metrics are scaled up to the full 25, instead of
+    #handing every resume 10 free points
+    if grammar_results.get('_component_status') == 'unavailable':
+        score = score * 25.0 / 15.0
+    else:
+        grammar_penalty = grammar_results.get('penalty_applied', 0.0)
+        score += max(0.0, 10.0 - grammar_penalty / 2.0)
 
     return min(25.0, max(0.0, score))
 
@@ -353,7 +372,7 @@ def calculate_overall_score(
         bonuses['good_skill_validation'] = 1.0
         score += 1.0
 
-    if grammar_results.get('total_errors', 0) == 0:
+    if grammar_results.get('_component_status') != 'unavailable' and grammar_results.get('total_errors', 0) == 0:
         bonuses['perfect_grammar'] = 1.0
         score += 1.0
 

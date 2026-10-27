@@ -90,7 +90,8 @@ def display_resume_coach(analysis: Dict[str, Any]) -> None:
         try:
             with st.spinner("Thinking..."):
                 reply = api_client.coach_chat(
-                    messages=[{"role": m["role"], "content": m["content"]} for m in history],
+                    #the backend accepts at most 30 messages of 4000 characters and only reads the last 10
+                    messages=[{"role": m["role"], "content": m["content"][:4000]} for m in history[-10:]],
                     analysis=analysis,
                     access_token=access_token,
                 )
