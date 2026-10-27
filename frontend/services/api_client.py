@@ -77,6 +77,21 @@ def generate_pdf(analysis_data: Dict[str, Any], access_token: str) -> bytes:
     return response.content
 
 
+def coach_chat(
+    messages: List[Dict[str, str]],
+    analysis: Dict[str, Any],
+    access_token: str,
+) -> Dict[str, Any]:
+    response = requests.post(
+        f"{_backend_url()}/api/v1/coach/chat",
+        json={"messages": messages, "analysis": analysis},
+        headers=_auth_headers(access_token),
+        timeout=120,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
 def get_history_pdf(analysis_id: str, access_token: str) -> bytes:
     response = requests.get(
         f"{_backend_url()}/api/v1/history/{analysis_id}/pdf",

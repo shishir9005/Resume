@@ -15,6 +15,15 @@ STREET_ADDRESS_PATTERN = (
     r'(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr|Court|Ct|Circle|Cir|Way|Place|Pl)\b'
 )
 
+#quantified achievements counted by the content score (also used by the coach's check_bullet tool)
+ACHIEVEMENT_PATTERNS = [
+    r'\d+%',
+    r'\$\d+',
+    r'\d+[kKmMbB]',
+    r'\d+\s*(?:users|customers|clients|projects|hours|days|months|years)',
+    r'(?:increased|decreased|improved|reduced|grew|saved)\s+(?:by\s+)?\d+',
+]
+
 def _tier_score(n: float, tiers:list)-> float:
     for threshold, pts in tiers:
         if n>=threshold:
@@ -232,14 +241,7 @@ def _calc_content_score(
 
     score += _tier_score(len(action_verbs), [(15,10.0),(10,8.0),(7,6.0),(5,4.0),(3,2.0)])
 
-    number_patterns = [
-        r'\d+%',
-        r'\$\d+',
-        r'\d+[kKmMbB]',
-        r'\d+\s*(?:users|customers|clients|projects|hours|days|months|years)',
-        r'(?:increased|decreased|improved|reduced|grew|saved)\s+(?:by\s+)?\d+',
-    ]
-    achievement_count = sum(len(re.findall(p, text, re.IGNORECASE)) for p in number_patterns)
+    achievement_count = sum(len(re.findall(p, text, re.IGNORECASE)) for p in ACHIEVEMENT_PATTERNS)
     score += _tier_score(achievement_count, [(10,5.0),(7,4.0),(5,3.0),(3,2.0),(1,1.0)])
 
     grammar_penalty = grammar_results.get('penalty_applied', 0.0)

@@ -4,7 +4,14 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 
 from backend.api.auth import get_current_user
-from backend.models.schemas import AnalysisResponse, ComponentScores, JDComparison, SkillValidationDetails
+from backend.models.schemas import (
+    AnalysisResponse,
+    CoachRequest,
+    CoachResponse,
+    ComponentScores,
+    JDComparison,
+    SkillValidationDetails,
+)
 from backend.utils.util import (
     get_default_grammar_results,
     get_default_location_results,
@@ -109,7 +116,8 @@ async def analyze_resume(
         matched_keywords=result.get('matched_keywords', []),
         skills=list(result.get('skills', [])[:20]),
         jd_comparison=jd_comparison_result,
-        interpretation=result.get('interpretation', '')
+        interpretation=result.get('interpretation', ''),
+        resume_sections=result.get('resume_sections'),
     )
 
 
@@ -121,6 +129,32 @@ async def analyze_resume(
 
     return response
 
+# Plain `def` (not async): the agent makes blocking Groq calls, so FastAPI runs it in a worker thread
+@router.post('/coach/chat', response_model=CoachResponse)
+def coach_chat(
+    body: CoachRequest,
+    request: Request,
+    user_id: str = Depends(get_current_user),
+):
+    knowledge_base = getattr(request.app.state, 'knowledge_base', None)
+    if knowledge_base is None:
+        raise HTTPException(status_code=503, detail='The Resume Coach is not available right now.')
+    if body.messages[-1].role != 'user':
+        raise HTTPException(status_code=422, detail='The last message must be from the user.')
+
+    from backend.services.agent import run_coach
+    try:
+        result = run_coach(
+            messages=[m.model_dump() for m in body.messages],
+            analysis=body.analysis,
+            knowledge_base=knowledge_base,
+        )
+    except Exception as exc:
+        logger.error(f'Coach failed: {exc}')
+        raise HTTPException(status_code=502, detail='The coach could not answer right now. Please try again.')
+
+    return CoachResponse(**result)
+
 @router.get('/health')
 async def health_check(request: Request):
     """Health check — confirms models are loaded and the API is ready."""
@@ -128,6 +162,7 @@ async def health_check(request: Request):
         'status':          'healthy',
         'nlp_loaded':      request.app.state.nlp is not None,
         'embedder_loaded': request.app.state.embedder is not None,
+        'knowledge_base_loaded': getattr(request.app.state, 'knowledge_base', None) is not None,
     }
 
 @router.get('/history')

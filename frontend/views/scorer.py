@@ -5,6 +5,7 @@ import streamlit as st
 
 from frontend.services import api_client
 from frontend.components.dashboard import display_results_dashboard
+from frontend.components.coach_chat import display_resume_coach
 
 
 def _read_jd(jd_file, jd_text: str) -> str:
@@ -183,6 +184,8 @@ def render() -> None:
         # If we have a prior result in session, render it again.
         if st.session_state.get("scorer_analysis"):
             display_results_dashboard(st.session_state["scorer_analysis"])
+            st.markdown("---")
+            display_resume_coach(st.session_state["scorer_analysis"])
         return
 
     access_token = st.session_state.get("access_token")
@@ -199,11 +202,14 @@ def render() -> None:
         if st.session_state.get("scorer_analysis"):
             display_results_dashboard(st.session_state["scorer_analysis"])
             _render_export_buttons(st.session_state["scorer_analysis"])
+            st.markdown("---")
+            display_resume_coach(st.session_state["scorer_analysis"])
         return
 
-    # Fresh analysis — drop any cached PDF/result.
+    # Fresh analysis — drop any cached PDF/result and the old coach chat.
     st.session_state.pop("scorer_pdf_bytes", None)
     st.session_state.pop("scorer_analysis", None)
+    st.session_state.pop("coach_messages", None)
 
     job_description = _read_jd(jd_file, jd_text) if analysis_mode == "Job Description Comparison" else ""
 
@@ -222,3 +228,5 @@ def render() -> None:
     st.success("✅ Analysis complete!")
     display_results_dashboard(analysis)
     _render_export_buttons(analysis)
+    st.markdown("---")
+    display_resume_coach(analysis)

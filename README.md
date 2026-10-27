@@ -14,7 +14,8 @@ Upload a resume, optionally paste a job description, and get a 0–100 ATS score
 - **技能验证：** 用语义相似度检查简历中列出的技能是否有项目或经历支撑
 - **岗位描述匹配：** 匹配度、语义相似度、已匹配和缺失的关键词、技能差距
 - **账号与历史：** 邮箱登录，分析结果保存在个人账户中，可随时删除
-- **技术栈：** Streamlit、FastAPI、spaCy、MiniLM 句向量（ONNX）、Groq API、Supabase、WeasyPrint
+- **简历教练（RAG + Agent）：** 基于分析结果和求职指南知识库的对话助手。Agent 通过工具调用检索指南、读取简历、改写要点，并用评分规则校验改写内容，不编造数字或技能。检索评测：hit@3 为 96%
+- **技术栈：** Streamlit、FastAPI、spaCy、MiniLM 句向量（ONNX）、Groq API（含工具调用）、Supabase、WeasyPrint
 
 在线演示使用免费服务器：空闲后首次打开约需一分钟唤醒，在中国大陆网络下可能更慢。
 
@@ -27,6 +28,7 @@ Upload a resume, optionally paste a job description, and get a 0–100 ATS score
 - **Skill validation.** Checks whether each skill listed on the resume is backed by a project or experience bullet, using semantic similarity.
 - **Job description match.** Match percentage, semantic similarity, matched and missing keywords, and a skills gap list.
 - **Actionable feedback.** Issues grouped by severity, with what's wrong, where it appears, how to fix it, and an example.
+- **Resume Coach (RAG + agent).** A chat under your results. It reads your analysis and a library of career guides, rewrites bullets and checks them against the scoring rules, and shows each step it took and the guides it used.
 - **Exports.** PDF report and plain-text summary.
 - **Accounts and history.** Email sign-in; every analysis is saved to your account, and you can delete it any time.
 
@@ -41,12 +43,45 @@ Upload a resume, optionally paste a job description, and get a 0–100 ATS score
 | ATS Compatibility | 15 |
 | **Total** | **100** |
 
+## Resume Coach: how the RAG and agent work
+
+```
+question ──► agent loop (Groq, tool calling, max 6 rounds)
+               │
+               ├── search_guides(query)       RAG: MiniLM embeddings + cosine search over backend/knowledge/*.md
+               ├── get_analysis()             the user's scores, issues, unvalidated skills, JD gaps
+               ├── get_resume_section(name)   the user's parsed summary / skills / experience / projects
+               └── check_bullet(text)         scoring rules + grounding check on any rewritten bullet
+               ▼
+answer + steps taken + guides used
+```
+
+**Retrieval (RAG).** The knowledge base is 13 short Markdown guides in `backend/knowledge/`: ATS formatting, bullet points, action verbs, skills, projects, tailoring to a job description, internships in China, skills by role, and how this app's score works. Each guide is split at its `##` headings (66 chunks). Every chunk is embedded once at startup with the same MiniLM model the scorer already uses, and a query is a single matrix-vector product. At this size a NumPy matrix is faster and simpler than a vector database. Code: `backend/services/rag.py`.
+
+**Agent.** A hand-written tool-calling loop on Groq's OpenAI-compatible API, about 100 lines, with no agent framework. Each round, the model either answers or asks for tools. The backend runs them and feeds the results back. After 6 rounds it must answer. Code: `backend/services/agent.py` (loop) and `backend/services/coach_tools.py` (tools).
+
+**Guardrails.**
+- `check_bullet` fails any rewrite whose numbers or keywords don't appear in the user's resume. This forces the agent to use placeholders like `[X%]`, or to ask the user, instead of inventing results or swapping in technologies they never used.
+- All tools are read-only.
+- The coach declines off-topic requests.
+- Each LLM call has a 30-second timeout.
+- Only tool names are logged, never resume text.
+
+**Evaluation.** `backend/evals/retrieval_eval.py` asks 24 test questions with known answers and reports hit@1, hit@3, and MRR. Current results: **hit@1 92%, hit@3 96%, MRR 0.94**. It exits non-zero if hit@3 drops below 80%, so it can run in CI.
+
+```bash
+python -m backend.evals.retrieval_eval
+```
+
+To add knowledge, drop a Markdown file with `##` sections into `backend/knowledge/`, add a test question for it to the eval, and restart the backend.
+
 ## Tech stack
 
 - **Frontend:** Streamlit
 - **Backend:** FastAPI
 - **NLP:** spaCy (`en_core_web_sm`) for entities and noun phrases; `all-MiniLM-L6-v2` sentence embeddings through ONNX (`fastembed`) for semantic matching
-- **LLM:** Groq API, used to extract structured data (skills, experience, projects) from resume and job description text
+- **LLM:** Groq API, used to extract structured data (skills, experience, projects) from resume and job description text, and to run the Resume Coach agent with tool calling
+- **RAG:** the same MiniLM embeddings over a Markdown knowledge base, with in-memory cosine search
 - **Auth and database:** Supabase (email auth, Postgres)
 - **Parsing:** pdfplumber, PyPDF2, python-docx
 - **PDF reports:** Jinja2 templates rendered with WeasyPrint
@@ -97,7 +132,10 @@ The backend starts by itself, so no second terminal is needed.
 ```
 backend/
   api/          routes and auth (Supabase token verification)
-  services/     parsing, scoring, JD matching, feedback, PDF export
+  services/     parsing, scoring, JD matching, feedback, PDF export,
+                and the Resume Coach (rag.py, agent.py, coach_tools.py)
+  knowledge/    Markdown career guides the coach retrieves from
+  evals/        retrieval evaluation for the knowledge base
   database/     Supabase history storage
   templates/    HTML templates for the PDF report
   core/         configuration and score weights

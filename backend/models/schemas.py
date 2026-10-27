@@ -1,5 +1,5 @@
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel
+from typing import Any, Dict, List, Literal, Optional
+from pydantic import BaseModel, Field
 
 class ComponentScores(BaseModel):
     formatting: float
@@ -51,3 +51,19 @@ class AnalysisResponse(BaseModel):
     jd_comparison: Optional[JDComparison] = None
     warnings: List[str] = []
     interpretation: str = ""
+
+    # Parsed resume text (summary, skills, experience, projects, education) for the Resume Coach
+    resume_sections: Optional[Dict[str, Any]] = None
+
+class CoachMessage(BaseModel):
+    role: Literal['user', 'assistant']
+    content: str = Field(..., min_length=1, max_length=4000)
+
+class CoachRequest(BaseModel):
+    messages: List[CoachMessage] = Field(..., min_length=1, max_length=30)
+    analysis: Dict[str, Any]      # the AnalysisResponse the user is asking about
+
+class CoachResponse(BaseModel):
+    answer: str
+    steps: List[Dict[str, Any]] = []   # [{'tool': str, 'args': dict}] in the order they ran
+    sources: List[str] = []            # guide sections the agent retrieved

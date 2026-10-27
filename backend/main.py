@@ -33,6 +33,14 @@ async def lifespan(app:FastAPI):
     app.state.embedder = Embedder(SENTENCE_TRANSFORMER_MODEL or "all-MiniLM-L6-v2")
     logger.info(f'Loaded {SENTENCE_TRANSFORMER_MODEL}')
 
+    # The Resume Coach is optional: if the guides fail to load, the scorer still works
+    from backend.services.rag import KnowledgeBase
+    try:
+        app.state.knowledge_base = KnowledgeBase(app.state.embedder)
+    except Exception as exc:
+        logger.warning(f'Knowledge base not loaded, Resume Coach disabled: {exc}')
+        app.state.knowledge_base = None
+
     logger.info('All models loaded. API is ready to serve requests.')
 
     yield
@@ -70,6 +78,7 @@ async def root():
             'DELETE /api/v1/history/:id':    'Delete a history entry',
             'GET    /api/v1/health':         'Health check',
             'POST   /api/v1/generate-pdf':   'Generate PDF report from data',
+            'POST   /api/v1/coach/chat':     'Ask the Resume Coach agent about an analysis',
         },
     }
 

@@ -142,6 +142,13 @@ def analyze_full_resume(
         "interpretation":    scores.get('overall_interpretation', ''),
         "skill_validation_details": skill_validation_details,
         "experience_months": experience_months,
+        "resume_sections": {
+            "summary":    parsed_resume.get('professional_summary', ''),
+            "skills":     skills,
+            "experience": parsed_resume.get('experience', []),
+            "projects":   projects,
+            "education":  parsed_resume.get('education', []),
+        },
     }
 
 
