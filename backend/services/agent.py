@@ -12,6 +12,7 @@ than with an agent framework, so every step is visible and easy to debug.
 """
 import json
 import logging
+import re
 from typing import Any, Dict, List
 
 from backend.services.coach_tools import TOOL_SCHEMAS, CoachTools
@@ -23,6 +24,14 @@ logger = logging.getLogger('ats_resume_scorer')
 MAX_STEPS        = 6     # tool-calling rounds before the agent must answer
 MAX_HISTORY      = 10    # earlier chat messages sent to the model
 REQUEST_TIMEOUT  = 30    # seconds per LLM call
+
+#the prompt asks the model not to name its tools, but it sometimes does; swap them for plain words
+TOOL_NAMES_FOR_USERS = {
+    'search_guides':      'the career guides',
+    'get_analysis':       'your analysis',
+    'get_resume_section': 'your resume',
+    'check_bullet':       'the bullet check',
+}
 
 SYSTEM_PROMPT = """You are Resume Coach, an assistant inside the ATS Resume Scorer app. \
 You help students improve their resume using their own analysis results and a library of career guides.
@@ -115,7 +124,14 @@ def _ask_llm(client, conversation: List[Dict[str, Any]], tool_choice: str):
 
 def _result(answer: str | None, steps: List[Dict[str, Any]], sources: List[str]) -> Dict[str, Any]:
     return {
-        'answer':  (answer or '').strip() or "Sorry, I couldn't put an answer together. Please try rephrasing.",
+        'answer':  _hide_tool_names(answer or '').strip() or "Sorry, I couldn't put an answer together. Please try rephrasing.",
         'steps':   steps,
         'sources': sources,
     }
+
+
+def _hide_tool_names(text: str) -> str:
+    for name, plain in TOOL_NAMES_FOR_USERS.items():
+        #also eat surrounding `code` or **bold** markers and a trailing "()"
+        text = re.sub(rf'[`*]*\b{name}\b(\(\))?[`*]*', plain, text)
+    return text
