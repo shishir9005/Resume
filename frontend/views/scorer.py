@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 
 import requests
@@ -6,6 +7,8 @@ import streamlit as st
 from frontend.services import api_client
 from frontend.components.dashboard import display_results_dashboard
 from frontend.components.coach_chat import display_resume_coach
+
+logger = logging.getLogger(__name__)
 
 
 def _read_jd(jd_file, jd_text: str) -> str:
@@ -37,13 +40,20 @@ def _show_backend_error(exc: Exception) -> None:
     elif isinstance(exc, requests.Timeout):
         st.error("The backend took too long to respond. Try a smaller resume or check the server logs.")
     elif isinstance(exc, requests.HTTPError) and exc.response is not None:
+        code = exc.response.status_code
         try:
-            detail = exc.response.json().get("detail", exc.response.text)
+            detail = exc.response.json().get("detail")
         except ValueError:
-            detail = exc.response.text
-        st.error(f"Backend returned {exc.response.status_code}: {detail}")
+            detail = None
+        # backend details are user-safe strings; anything else (validation lists,
+        # proxy HTML pages) only goes to the log
+        if not isinstance(detail, str):
+            logger.warning(f"Backend error {code}: {exc.response.text[:500]}")
+            detail = "Something went wrong on the server. Try again in a moment."
+        st.error(f"Error {code}: {detail}")
     else:
-        st.error(f"Unexpected error: {exc}")
+        logger.exception("Unexpected error while calling the backend")
+        st.error("Something went wrong. Try again in a moment.")
 
 
 def _summary_text(analysis: dict) -> str:

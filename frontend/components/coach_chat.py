@@ -38,9 +38,12 @@ def _render_reply_details(steps, sources) -> None:
 def _error_message(exc: requests.RequestException) -> str:
     if isinstance(exc, requests.HTTPError) and exc.response is not None:
         try:
-            return exc.response.json().get("detail", exc.response.text)
+            detail = exc.response.json().get("detail")
         except ValueError:
-            return exc.response.text
+            detail = None
+        if isinstance(detail, str):
+            return detail
+        return "The coach ran into a problem. Please try again."
     if isinstance(exc, requests.Timeout):
         return "The coach took too long to answer. Please try again."
     return "Can't reach the coach right now. Please try again in a minute."
