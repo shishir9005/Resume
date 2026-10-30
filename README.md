@@ -85,7 +85,7 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-34 tests cover the scoring rules, keyword matching, the coach's tools and grounding check, chunking and search, the agent loop (with a fake LLM, so no API calls), the coach API's input validation, and the Word templates. They run offline in a few seconds. GitHub Actions runs them and the retrieval eval on every push.
+39 tests cover the scoring rules, keyword matching, file upload checks, the coach's tools and grounding check, chunking and search, the agent loop (with a fake LLM, so no API calls), the coach API's input validation, and the Word templates. They run offline in a few seconds. GitHub Actions runs them and the retrieval eval on every push.
 
 ## Tech stack
 
