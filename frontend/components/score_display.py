@@ -6,7 +6,7 @@ from frontend.components._helpers import get_score_color, get_score_emoji
 
 
 # Component max scores match backend/core/config.py SCORE_WEIGHTS.
-# (Backend returns each component's score on its own scale, not 0–100.)
+# (Backend returns each component's score on its own scale, not 0-100.)
 COMPONENTS = [
     ("Formatting",        "formatting",        20, "📝"),
     ("Keywords & Skills", "keywords",          25, "🔑"),

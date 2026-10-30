@@ -184,7 +184,7 @@ def extract_text_from_docx(file_data: bytes) -> str:
         return text.strip()
 
     except FileParsingError:
-        raise   # Re-raise unchanged — don't wrap in another FileParsingError
+        raise   # Re-raise unchanged, don't wrap in another FileParsingError
 
     except Exception as e:
         log_error(e, context='extract_text_from_docx')

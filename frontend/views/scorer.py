@@ -216,7 +216,7 @@ def render() -> None:
             display_resume_coach(st.session_state["scorer_analysis"])
         return
 
-    # Fresh analysis — drop any cached PDF/result and the old coach chat.
+    # Fresh analysis: drop any cached PDF/result and the old coach chat.
     st.session_state.pop("scorer_pdf_bytes", None)
     st.session_state.pop("scorer_analysis", None)
     st.session_state.pop("coach_messages", None)

@@ -10,8 +10,6 @@ class Priority(Enum):
     MEDIUM='medium'
     LOW='low'
 
-# Priority.CRITICAL
-
 @dataclass
 class Recommendation:
     title:        str

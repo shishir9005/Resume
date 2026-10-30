@@ -8,7 +8,7 @@ TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), '..', 'templates')
 env = Environment(loader=FileSystemLoader(TEMPLATE_DIR), autoescape=True)
 
 def format_date(value, fmt='%B %d, %Y at %I:%M %p'):
-    """Convert ISO timestamp string → human-readable date string."""
+    """Turn an ISO timestamp into a readable date, e.g. "October 28, 2026 at 03:15 PM"."""
     if not value:
         return ''
     try:
@@ -20,10 +20,10 @@ def format_date(value, fmt='%B %d, %Y at %I:%M %p'):
 env.filters['format_date'] = format_date
 
 def generate_html_reports(analysis_data: Dict) -> Dict[str, str]:
-    # 1. Extract timestamp 
+    #timestamp shown in the report header
     now = datetime.now().isoformat()
 
-    # 2.Overall score + interpretation 
+    #overall score + interpretation
     overall_score = analysis_data.get('ATS_score', 0) or analysis_data.get('ats_score', 0)
     interpretation = analysis_data.get('interpretation') or ''  
     cs = analysis_data.get('component_scores') or {}
@@ -38,7 +38,7 @@ def generate_html_reports(analysis_data: Dict) -> Dict[str, str]:
         'ats_compatibility': float(cs.get('ats_compatibility', 0)),
     }
 
-    # Progress-bar percentages (used in Report 1's visual breakdown)
+    #progress-bar widths for the score breakdown in summary.html
     def pct(score, max_score):
         return min(100, max(0, round(score / max_score * 100)))
 
@@ -83,13 +83,13 @@ def generate_html_reports(analysis_data: Dict) -> Dict[str, str]:
     validated_count    = svd_raw.get('validated_count', len(validated_skills))
     validation_pct     = svd_raw.get('validation_pct', 0.0)
 
-    #7. JD comparison (for Report 3) 
+    #JD comparison (quick_actions.html)
     jd_raw = analysis_data.get('jd_match_analysis') or analysis_data.get('jd_comparison')
     if hasattr(jd_raw, 'model_dump'):
         jd_raw = jd_raw.model_dump()
 
 
-    #8. Score colour (green / orange / red) 
+    #score colour (green / orange / red)
     if overall_score >= 80:
         score_color = '#16a34a'   # green
     elif overall_score >= 60:
@@ -97,7 +97,7 @@ def generate_html_reports(analysis_data: Dict) -> Dict[str, str]:
     else:
         score_color = '#dc2626'   # red
 
-    #9. Build shared context dict passed to every template 
+    #one context dict shared by every template
     context = {
         'timestamp':          now,
         'overall_score':      overall_score,

@@ -34,7 +34,7 @@
             border-bottom: 2px solid #e2e8f0;
         }
 
-        /* ── Issue Cards ── */
+        /* Issue Cards */
         .issue-card {
             border-radius: 8px;
             margin-bottom: 20px;
@@ -102,7 +102,7 @@
         }
         .fix-box strong { display: block; margin-bottom: 3px; }
 
-        /* ── Action Items inside each card ── */
+        /* Action Items inside each card */
         .action-list { margin: 8px 0 0 0; padding: 0; list-style: none; }
         .action-list li {
             padding: 5px 0 5px 20px;
@@ -120,7 +120,7 @@
             font-weight: 700;
         }
 
-        /* ── Printable Checklist ── */
+        /* Printable Checklist */
         .checklist-section { margin-top: 40px; }
         .checklist-group { margin-bottom: 28px; }
         .checklist-group-title {
@@ -154,7 +154,7 @@
         }
         .checklist-text { font-size: 13px; color: #334155; }
 
-        /* ── Empty state ── */
+        /* Empty state */
         .empty-state {
             text-align: center;
             color: #64748b;
@@ -186,11 +186,9 @@
         {{ total_issues }} issue(s) found. Addressing all of them could significantly improve your ATS score.
     </p>
 
-    <!-- ═══════════════════════════════════════════════ -->
-    <!-- PART 1: Detailed Recommendations                -->
-    <!-- ═══════════════════════════════════════════════ -->
+    <!-- PART 1: Detailed Recommendations -->
 
-    <!-- ── High Priority ── -->
+    <!-- High Priority -->
     {% if high_priority %}
     <h2>High Priority — Fix These First</h2>
     {% for issue in high_priority %}
@@ -236,7 +234,7 @@
     {% endfor %}
     {% endif %}
 
-    <!-- ── Medium Priority ── -->
+    <!-- Medium Priority -->
     {% if medium_priority %}
     <h2>Medium Priority — Strengthen Your Resume</h2>
     {% for issue in medium_priority %}
@@ -273,7 +271,7 @@
     {% endfor %}
     {% endif %}
 
-    <!-- ── Low Priority ── -->
+    <!-- Low Priority -->
     {% if low_priority %}
     <h2>Low Priority — Polish</h2>
     {% for issue in low_priority %}
@@ -300,9 +298,7 @@
     </div>
     {% endif %}
 
-    <!-- ═══════════════════════════════════════════════ -->
-    <!-- PART 2: Printable Action Items Checklist        -->
-    <!-- ═══════════════════════════════════════════════ -->
+    <!-- PART 2: Printable Action Items Checklist -->
 
     <div class="checklist-section">
         <h2>Action Items Checklist</h2>

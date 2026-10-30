@@ -1,7 +1,7 @@
 import logging
 import sys
 import os
-from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
+from typing import Callable, Dict, Optional, Tuple, TypeVar
 
 LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'logs')
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -9,14 +9,14 @@ os.makedirs(LOG_DIR, exist_ok=True)
 logger = logging.getLogger('ats_resume_scorer')
 logger.setLevel(logging.INFO)
 
-# Simplified file handler - only basic logs
+#everything INFO and up goes to logs/ats_scorer.log
 file_handler = logging.FileHandler(os.path.join(LOG_DIR, "ats_scorer.log"))
 file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(logging.Formatter(
     '%(asctime)s - %(levelname)s - %(message)s'
 ))
 
-# Simplified console handler
+#only warnings and errors reach the terminal
 console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setLevel(logging.WARNING)
 console_handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
@@ -26,8 +26,8 @@ if not logger.handlers:
     logger.addHandler(console_handler)
 
 class ATSBaseError(Exception):
-    """Simple base class for ATS errors."""
-    def __init__(self, message: str, user_message: Optional[str] = None, **kwargs):
+    """message is for the logs, user_message is safe to show in the UI."""
+    def __init__(self, message: str, user_message: Optional[str] = None):
         super().__init__(message)
         self.message = message
         self.user_message = user_message or 'An error occurred. Please try again.'
@@ -41,16 +41,13 @@ class FileParsingError(ATSBaseError):
 class TextExtractionError(ATSBaseError):
     pass
 
-def log_error(error: Exception, context: Optional[str] = None, **kwargs) -> None:
-    """Log an error simply."""
+def log_error(error: Exception, context: Optional[str] = None) -> None:
     logger.error(f"Error in {context or 'unknown'}: {error}")
 
-def log_warning(message: str, context: Optional[str] = None, **kwargs) -> None:
-    """Log a warning simply."""
+def log_warning(message: str, context: Optional[str] = None) -> None:
     logger.warning(f"{context}: {message}" if context else message)
 
-def log_info(message: str, context: Optional[str] = None, **kwargs) -> None:
-    """Log info simply."""
+def log_info(message: str, context: Optional[str] = None) -> None:
     logger.info(f"{context}: {message}" if context else message)
 
 T = TypeVar('T')
@@ -62,8 +59,7 @@ def with_fallback(
     log_fallback: bool = True,
     **kwargs
 ) -> Tuple[T, bool]:
-    # Remove error_category if passed by accident
-    kwargs.pop('error_category', None)
+    #returns (result, used_fallback) so the caller can log which path ran
     try:
         return primary_func(*args, **kwargs), False
     except Exception as primary_error:
@@ -108,15 +104,4 @@ def get_default_skill_validation_results() -> Dict:
         'validation_score':     0.0,
         '_component_status':    'unavailable',
         '_note': 'Skill validation unavailable.'
-    }
-
-def get_default_jd_comparison_results() -> Dict:
-    return {
-        'semantic_similarity': 0.0,
-        'matched_keywords':    [],
-        'missing_keywords':    [],
-        'skills_gap':          [],
-        'match_percentage':    0.0,
-        '_component_status':   'unavailable',
-        '_note': 'JD comparison unavailable.'
     }

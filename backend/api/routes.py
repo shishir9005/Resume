@@ -95,9 +95,7 @@ async def analyze_resume(
             skills_gap=result['jd_comparison'].get('skills_gap', [])[:10],
         )
 
-    # Convert detailed_feedback objects from prediction into what schema expects
     detailed_fb = result.get('detailed_feedback', [])
-    
 
     svd_raw = result.get('skill_validation_details') or {}
     skill_val_details = SkillValidationDetails(
@@ -116,7 +114,7 @@ async def analyze_resume(
         jd_match_analysis=jd_comparison_result,
         skill_validation_details=skill_val_details,
 
-        # Retro-compatibility fields
+        #older flat fields; the frontend and saved history still read these
         ats_score=result['ats_score'],
         keyword_match=jd_comparison_result.match_percentage if jd_comparison_result else 0.0,
         missing_keywords=result.get('missing_keywords', []),
@@ -167,7 +165,7 @@ def coach_chat(
 
 @router.get('/health')
 async def health_check(request: Request):
-    """Health check — confirms models are loaded and the API is ready."""
+    """Health check: confirms models are loaded and the API is ready."""
     return {
         'status':          'healthy',
         'nlp_loaded':      request.app.state.nlp is not None,
