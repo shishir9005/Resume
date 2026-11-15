@@ -37,14 +37,31 @@ Upload a resume, optionally paste a job description, and get a 0–100 ATS score
 
 ## How the score is built
 
-| Component | Max points |
-|---|---|
-| Formatting | 20 |
-| Keywords & Skills | 25 |
-| Content Quality | 25 |
-| Skill Validation | 15 |
-| ATS Compatibility | 15 |
-| **Total** | **100** |
+Each of the five components is scored on its own scale. These are the numbers the results page shows (for example 16/20).
+
+| Component | Max points | Share of the overall score |
+|---|---|---|
+| Formatting | 20 | 15% |
+| Keywords & Skills | 25 | 24% |
+| Skill Validation | 15 | 16% |
+| Content Quality | 25 | 30% |
+| ATS Compatibility | 15 | 15% |
+
+**The overall 0–100 score is not the sum of the five.** Each component is first converted to a percentage of its own maximum, then combined (`calculate_overall_score` in `backend/services/scorer.py`):
+
+```
+skills_keywords = 0.6 × keywords% + 0.4 × skill_validation%
+base = 0.40 × skills_keywords + 0.30 × content% + 0.15 × formatting% + 0.15 × ats_compatibility%
+```
+
+Adjustments to `base`, after which the result is clipped to 0–100:
+
+- **Bonus:** +2 if 90% or more of the listed skills are validated, +1 from 80%.
+- **Penalty (only when a job description is given):** −5 if more than 30% of its keywords are missing, −10 above 50%, −15 above 70%.
+
+Example: component points 20, 10, 25, 15, 15 (keywords low, everything else full) sum to 85, but the overall score is 87.6.
+
+**Not active in the current app:** grammar is not checked and location detection is not run for scoring, so the grammar part of Content Quality, the grammar bonus and the location penalty in the code never apply. Content Quality comes from action verbs and quantified achievements only, scaled to 25.
 
 ## Resume Coach: how the RAG and agent work
 

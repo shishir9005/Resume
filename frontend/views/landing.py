@@ -50,11 +50,14 @@ def render():
         st.markdown("""
         ### 📊 Comprehensive Scoring
         Get detailed scores across 5 key dimensions:
-        - Formatting (20%)
-        - Keywords & Skills (25%)
-        - Content Quality (25%)
-        - Skill Validation (15%)
-        - ATS Compatibility (15%)
+        - Formatting (up to 20 points)
+        - Keywords & Skills (up to 25)
+        - Content Quality (up to 25)
+        - Skill Validation (up to 15)
+        - ATS Compatibility (up to 15)
+
+        The overall 0–100 score is a weighted combination of these
+        five, not their simple sum.
         """)
 
     with col2:
